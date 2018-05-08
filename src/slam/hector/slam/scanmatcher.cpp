@@ -8,6 +8,7 @@
 
 #include <slam/hector/slam/scanmatcher.h>
 #include <std-math/gadgets.h>
+#include <common/draw.h>
 
 namespace sgbot {
 namespace slam {
@@ -15,6 +16,15 @@ namespace hector {
 
   sgbot::Pose2D ScanMatcher::scanMatch(OccupancyGridMapOptimizer& optimizer, const sgbot::Pose2D& estimation_world_pose, const sgbot::sensor::Lidar2D& scan, sgbot::la::Matrix<float, 3, 3>& covariance, const int max_iteration_times)
   {
+    // debug
+    if(sgbot::draw.active())
+    {
+      sgbot::Pose2D estimate_map_pose = optimizer.getMapPose(estimation_world_pose);
+      sgbot::draw.drawPose(estimate_map_pose);
+      sgbot::draw.drawScan(scan);
+      sgbot::draw.update();
+    }
+
     if(scan.getCount() > 0)
     {
       sgbot::Pose2D estimate_map_pose = optimizer.getMapPose(estimation_world_pose);
@@ -23,7 +33,8 @@ namespace hector {
 
       for(int i = 0; i < max_iteration_times; ++i)
       {
-        estimateTransformation(optimizer, estimate_map_pose, scan);
+        // debug
+        //estimateTransformation(optimizer, estimate_map_pose, scan);
 
         // TODO: confirm the iteration times and add debug code
       }
@@ -42,6 +53,10 @@ namespace hector {
   {
     optimizer.getCompleteHessianDerivs(estimation, scan, hessian_, delta_tf_);
 
+    // debug
+    std::cout << "\nH: \n" << hessian_ << std::endl;
+    //std::cout << "\ndTr: \n" << delta_tf_ << std::endl;
+
     if((hessian_(0, 0) != 0.0f) && (hessian_(1, 1) != 0.0f))
     {
       float dummy;
@@ -53,10 +68,16 @@ namespace hector {
       // TODO: there must be some better idea here, use other estimate method?
       if(search_dir(2) > 0.2f)
       {
+        // debug
+        std::cout << "search dir too long!" << std::endl;
+
         search_dir(2) = 0.2f;
       }
       else if(search_dir(2) < -0.2f)
       {
+        // debug
+        std::cout << "search dir too long!" << std::endl;
+
         search_dir(2) = -0.2f;
       }
 

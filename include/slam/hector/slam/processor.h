@@ -49,7 +49,7 @@ namespace hector {
       delete map_representation_;
     }
 
-    void update(const sgbot::sensor::Lidar2D& scan, const sgbot::Pose2D& pose_hint_world, bool need_matching = false);
+    void update(const sgbot::sensor::Lidar2D& scan, const sgbot::Pose2D& pose_hint_world, bool need_matching = true);
 
     void reset()
     {
@@ -87,6 +87,16 @@ namespace hector {
     OccupancyGridMap& getMap(int level) const
     {
       return map_representation_->getMap(level);
+    }
+
+    void lockMap(int level)
+    {
+      map_representation_->lockMap(level);
+    }
+
+    void unlockMap(int level)
+    {
+      map_representation_->unlockMap(level);
     }
 
   private:

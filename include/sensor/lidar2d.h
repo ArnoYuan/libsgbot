@@ -37,6 +37,22 @@ namespace sensor {
       }
     }
 
+    Lidar2D operator =(const Lidar2D& other) const
+    {
+      Lidar2D result;
+      
+      result.origin_ = other.getOrigin();
+      
+      result.points_.resize(other.getCount());
+
+      for(int i = 0; i < result.points_.size(); ++i)
+      {
+        result.points_[i] = other.getPoint(i);
+      }
+
+      return result;
+    }
+
     // Member functions
     void addBeam(float angle, float distance)
     {
@@ -95,6 +111,28 @@ namespace sensor {
       return *this;
     }
 
+    Lidar2D operator *(float factor) const
+    {
+      Lidar2D result = *this;
+      result.origin_ *= factor;
+      for(int i = 0; i < result.points_.size(); i++)
+      {
+        result.points_[i] *= factor;
+      }
+      return result;
+    }
+
+    Lidar2D operator /(float factor) const
+    {
+      Lidar2D result = *this;
+      result.origin_ /= factor;
+      for(int i = 0; i < result.points_.size(); i++)
+      {
+        result.points_[i] /= factor;
+      }
+      return result;
+    }
+
     const sgbot::Point2D& getOrigin() const
     {
       return origin_;
@@ -105,10 +143,28 @@ namespace sensor {
       origin_ = origin;
     }
 
-  private:
+  protected:
     std::vector<sgbot::Point2D> points_;
     sgbot::Point2D origin_;
   };
+
+  inline std::ostream& operator <<(std::ostream& output, const Lidar2D& scan)
+  {
+    output << "[" << std::endl;
+    output << "  point cout: " << scan.getCount() << std::endl;
+    output << "  origin    : " << scan.getOrigin().x() << " , " << scan.getOrigin().y() << std::endl;
+
+    for(int i = 0; i < scan.getCount(); i++)
+    {
+      output << "(" << scan.getPoint(i).x() << "," << scan.getPoint(i).y() << ") , ";
+    }
+
+    output << std::endl;
+    
+    output << "]" << std::endl;
+    return output;
+  }
+
 }  // namespace sgbot
 }  // namespace sensor
 
