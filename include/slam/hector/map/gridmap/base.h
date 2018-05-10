@@ -156,25 +156,25 @@ namespace hector {
     }
 
     // TODO:  to confirm this transform is correct.
-    sgbot::Point2D getWorldCoords(const sgbot::Point2D map_coords)
+    sgbot::Point2D getWorldCoords(const sgbot::Point2D& map_coords)
     {
       return world_to_map_tf_.transform(map_coords);
     }
 
     // TODO:  to confirm this transform is correct.
-    sgbot::Point2D getMapCoords(const sgbot::Point2D world_coords)
+    sgbot::Point2D getMapCoords(const sgbot::Point2D& world_coords)
     {
       return map_to_world_tf_.transform(world_coords);
     }
 
     // TODO:  to confirm this transform is correct.
-    sgbot::Pose2D getWorldPose(const sgbot::Pose2D map_pose)
+    sgbot::Pose2D getWorldPose(const sgbot::Pose2D& map_pose)
     {
       return world_to_map_tf_.transform(map_pose);
     }
 
     // TODO:  to confirm this transform is correct.
-    sgbot::Pose2D getMapPose(const sgbot::Pose2D world_pose)
+    sgbot::Pose2D getMapPose(const sgbot::Pose2D& world_pose)
     {
       return map_to_world_tf_.transform(world_pose);
     }
