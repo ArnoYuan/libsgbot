@@ -11,7 +11,6 @@
 #include <std-math/math.h>
 #include <cstdlib>
 #include <cmath>
-
 namespace sgbot {
 namespace math {
   

@@ -12,26 +12,36 @@
 
 namespace sgbot {
 namespace tf {
-  Transform2D& Transform2D::operator *=(const Transform2D& tf) {
-
-  }
-
-  Transform2D Transform2D::operator *(const Transform2D& tf) {
-
-  }
-
-  Transform2D Transform2D::inverse() {
-
-  }
 
   sgbot::Pose2D Transform2D::transform(const sgbot::Pose2D& pose)
   {
+    sgbot::Pose2D result;
 
+    sgbot::Point2D point;
+    point.x() = pose.x();
+    point.y() = pose.y();
+    
+    point = transform(point);
+
+    result.x() = point.x();
+    result.y() = point.y();
+    result.theta() = pose.theta() + getRotate();
+
+    return result;
   }
 
-  sgbot::Point2D Transform2D::transform(const sgbot::Point2D& pose)
+  sgbot::Point2D Transform2D::transform(const sgbot::Point2D& point)
   {
+    sgbot::Point2D result;
 
+    sgbot::la::Vector<float, 3> coord;
+
+    coord = tf_ * point.vectorForTransform();
+
+    result.x() = coord(0);
+    result.y() = coord(1);
+
+    return result;
   }
 
 }  // namespace tf
