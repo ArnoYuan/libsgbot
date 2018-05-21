@@ -107,7 +107,7 @@ namespace hector {
       {
         if(i == 0)
         {
-          pose = maps_[i]->getScanMatcher().scanMatch(getOptimizer(i), pose, scan, covariance, 5);
+          pose = maps_[i]->getScanMatcher().scanMatch(getOptimizer(i), pose, scan, covariance, 0);
         }
         else
         {
@@ -126,7 +126,7 @@ namespace hector {
             multi_level_scans_[i - 1].addPoint(scan.getPoint(j).x() * adjust_factor, scan.getPoint(j).y() * adjust_factor);
           }
 
-          pose = maps_[i]->getScanMatcher().scanMatch(getOptimizer(i), pose, multi_level_scans_[i - 1], covariance, 3);
+          pose = maps_[i]->getScanMatcher().scanMatch(getOptimizer(i), pose, multi_level_scans_[i - 1], covariance, 0);
         }
       }
       return pose;
