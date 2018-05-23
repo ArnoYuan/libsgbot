@@ -161,7 +161,8 @@ namespace tf {
       assert(rotate_(0, 0) == rotate_(1, 1));
       assert(rotate_(0, 1) == -rotate_(1, 0));
 
-      return sgbot::math::asin(rotate_(0, 1));
+      //return sgbot::math::asin(rotate_(0, 1));
+      return sgbot::math::asin(rotate_(1,0));
     }
 
     void getTranslation(float& dx, float& dy) const
