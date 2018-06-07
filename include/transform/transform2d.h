@@ -109,8 +109,8 @@ namespace tf {
       //return Transform2D(-dx_, -dy_, -theta_, (1.0f / scalar_));
       Transform2D inv;
       inv.translate_ = this->translate_.inverse();
-      inv.translate_ = this->rotate_.inverse();
-      inv.translate_ = this->scale_.inverse();
+      inv.rotate_ = this->rotate_.inverse();
+      inv.scale_ = this->scale_.inverse();
       //inv.calcTransformMatrix();
       inv.tf_ = this->tf_.inverse();
       return inv;
