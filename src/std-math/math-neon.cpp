@@ -10,24 +10,6 @@
 
 #include <std-math/math.h>
 
-#ifndef _MATH_H
-#define M_PI		3.14159265358979323846	/* pi */
-#define M_PI_2		1.57079632679489661923	/* pi/2 */
-#define M_PI_4		0.78539816339744830962	/* pi/4 */
-#define M_E			2.7182818284590452354	/* e */
-#define M_LOG2E		1.4426950408889634074	/* log_2 e */
-#define M_LOG10E	0.43429448190325182765	/* log_10 e */
-#define M_LN2		0.69314718055994530942	/* log_e 2 */
-#define M_LN10		2.30258509299404568402	/* log_e 10 */
-#define M_1_PI		0.31830988618379067154	/* 1/pi */
-#define M_2_PI		0.63661977236758134308	/* 2/pi */
-#define M_2_SQRTPI	1.12837916709551257390	/* 2/sqrt(pi) */
-#define M_SQRT2		1.41421356237309504880	/* sqrt(2) */
-#define M_SQRT1_2	0.70710678118654752440	/* 1/sqrt(2) */
-#endif 
-
-
-
 
 namespace sgbot {
 namespace math {
@@ -126,6 +108,8 @@ namespace math {
   }; 
  
   const float __atanf_pi_2 = M_PI_2;
+
+  const float __atan2_epsilon = 0.000001f;
 
   const float __atan2f_lut[4] = {
 	-0.0443265554792128,	//p7
@@ -626,6 +610,7 @@ RMS  Error: ~0.000008%
 
   float atan2(float y, float x)
   {
+#if 0
 	asm volatile (
 
 	"vdup.f32	 	d17, d0[1]				\n\t"	//d17 = {x, x};
@@ -680,6 +665,140 @@ RMS  Error: ~0.000008%
 	:: "r"(__atan2f_lut),  "r"(__atan2f_pi_2) 
     : "d0", "d1", "d2", "d3", "d4", "d5", "d6", "d7"
 	);
+#endif
+
+	float ret;
+
+	float _y = y;
+	float _x = x;
+	if(_x==0&&_y>0)
+	{
+		return 	__atan2f_pi_2;
+	}
+	else if(_x==0&&_y<0)
+	{
+		return -__atan2f_pi_2;
+	}
+	else if(_x<0&&_y==0)
+	{
+		return 2*__atan2f_pi_2;	
+	}
+
+
+	asm volatile (
+
+	"vdup.f32	 	d17, %4				\n\t"	//d17 = {x, x};
+	"vdup.f32	 	d16, %5				\n\t"	//d16 = {y, y};
+	
+	//1.0 / x
+	"vrecpe.f32		d18, d17				\n\t"	//d16 = ~ 1 / d1; 
+	"vrecps.f32		d19, d18, d17			\n\t"	//d17 = 2.0 - d16 * d1; 
+	"vmul.f32		d18, d18, d19			\n\t"	//d16 = d16 * d17; 
+	"vrecps.f32		d19, d18, d17			\n\t"	//d17 = 2.0 - d16 * d1; 
+	"vmul.f32		d18, d18, d19			\n\t"	//d16 = d16 * d17; d18 = 1.0/x
+
+	//y * (1.0 /x)
+	"vmul.f32		d0, d16, d18			\n\t"	//d0 = d16 * d18; d0 = y/x
+
+
+	"vdup.f32	 	d4, %2					\n\t"	//d4 = {pi/2, pi/2};
+	"vmov.f32	 	d6, d0					\n\t"	//d6 = d0;
+	"vabs.f32	 	d0, d0					\n\t"	//d0 = fabs(d0) ;d0=c=fabs(y/x)
+
+	//fast reciporical approximation
+	"vrecpe.f32		d1, d0					\n\t"	//d1 = ~ 1 / d0; 
+	"vrecps.f32		d2, d1, d0				\n\t"	//d2 = 2.0 - d1 * d0; 
+	"vmul.f32		d1, d1, d2				\n\t"	//d1 = d1 * d2; 
+	"vrecps.f32		d2, d1, d0				\n\t"	//d2 = 2.0 - d1 * d0; 
+	"vmul.f32		d1, d1, d2				\n\t"	//d1 = d1 * d2; d1 =1/c=xinv
+
+	//if |x| > 1.0 -> ax = 1/ax, r = pi/2
+	"vadd.f32		d1, d1, d0				\n\t"	//d1 = d1 + d0; d0=c, d1=c+1/c=xinv
+	"vmov.f32	 	d2, #1.0				\n\t"	//d2 = 1.0;
+	"vcgt.f32	 	d3, d0, d2				\n\t"	//d3 = (d0 > d2);
+	"vmov.s32		d2,#1		\n\t"
+	"vand			d3,d3,d2	\n\t"
+	"vcvt.f32.u32	d3, d3					\n\t"	//d3 = (float) d3;		d3=a=(c)>1
+	"vmls.f32		d0, d1, d3				\n\t"	//d0 = d0 - d1 * d3; 	d0=c=c-a*xinv
+	"vmul.f32		d7, d3, d4				\n\t"	//d7 = d3 * d4;		d7=a*pi/2=r 
+	
+	//polynomial:
+	"vmul.f32 		d2, d0, d0				\n\t"	//d2 = d0*d0 = {ax^2, ax^2}, xx=c*c=d2	
+	"vld1.32 		{d4, d5}, [%1]			\n\t"	//d4 = {p7, p3}, d5 = {p5, p1}
+	"vmul.f32 		d3, d2, d2				\n\t"	//d3 = d2*d2 = {x^4, x^4}		d3=xx*xx=c*c*c*c
+	"vmul.f32 		q0, q2, d0[0]			\n\t"	//q0 = q2 * d0[0] = {p7x, p3x, p5x, p1x}
+	"vmla.f32 		d1, d0, d2[0]			\n\t"	//d1 = d1 + d0*d2[0] = {p5x + p7x^3, p1x + p3x^3}	d1={a,b}
+
+//#if 1
+
+	"vmla.f32		d7,d3,d1[0]			\n\t"
+	"vmov.f32		s2,s3				\n\t"
+	"vadd.f32		d7,d7,d1			\n\t"	//d7=r//0.785232	
+
+	"vdup.f32		d1,%2				\n\t"
+	
+	"vsub.f32		d1,d1,d7			\n\t"
+	"vmov.f32		d2,#2.0				\n\t"	
+
+	"vdup.f32		d2,d2[0]			\n\t"
+	"vmul.f32		d1,d1,d2			\n\t"	//d1=b=b-2.0f*r 1.571130
+	
+
+	"vclt.f32		d2,d17,#0			\n\t"	//d2=x<0
+	"vmov.s32		d3,#1		\n\t"
+	"vand			d2,d2,d3	\n\t"
+	
+	"vcvt.f32.s32		d2,d2				\n\t"
+	
+	"vmla.f32		d7,d2,d1			\n\t"	//d7=r=r+(x<0)*b
+
+	"vabs.f32		d2,d17				\n\t"	//d2=fabs(x)
+	
+	"vdup.f32		d3,%3				\n\t"
+	"vclt.f32		d4,d2,d3			\n\t"	//d4=fabs(x)<0.000001f
+	"vcge.f32		d5,d2,d3			\n\t"	//d5=fabs(x)>=0.000001f
+	
+	"vmov.s32		d3,#1		\n\t"
+	"vand			d4,d4,d3	\n\t"
+	"vand			d5,d5,d3	\n\t"
+	"vcvt.f32.u32		d4,d4				\n\t"
+
+	"vcvt.f32.u32		d5,d5				\n\t"
+
+	
+
+	"vmul.f32		d7,d7,d5			\n\t"
+	"vdup.f32		d3,%2				\n\t"
+	"vmla.f32		d7,d4,d3			\n\t"
+	"vadd.f32		d6,d7,d7			\n\t"
+	
+	"vclt.f32		d8,d16,#0			\n\t"
+	"vmov.s32		d2,#1		\n\t"
+	"vand			d8,d8,d2	\n\t"
+	"vcvt.f32.u32		d8,d8				\n\t"
+	"vmls.f32		d7,d8,d6			\n\t"
+	
+	"vmov.f32		%0,s14		\n\t"
+	
+//#else	
+//	"vmla.f32 		d1, d3, d1[0]			\n\t"	//d1 = d1 + d3*d1[0] = {..., p1x + p3x^3 + p5x^5 + p7x^7}		
+//	"vadd.f32 		d1, d1, d7				\n\t"	//d1 = d1 + d7		
+	
+//	"vadd.f32 		d2, d1, d1				\n\t"	//d2 = d1 + d1		
+//	"vclt.f32	 	d3, d6, #0				\n\t"	//d3 = (d6 < 0)	
+//	"vmov.s32		d4,#1	\n\t"
+//	"vand			d3,d4	\n\t"
+//	"vcvt.f32.u32	d3, d3					\n\t"	//d3 = (float) d3	
+//	"vmls.f32 		d1, d3, d2				\n\t"	//d1 = d1 - d2 * d3;
+//	"vmov.f32 		s0, s2					\n\t"	//s0 = s3
+//#endif
+
+	:"=r"(ret): "r"(__atan2f_lut),  "r"(__atan2f_pi_2), "r"(__atan2_epsilon),"r"(_x),"r"(_y)
+	: "d0", "d1", "d2", "d3", "d4", "d5", "d6", "d7","d16","d17","d18","d19"
+	);
+
+	return ret;
+
   }
 
   float cos(float x)

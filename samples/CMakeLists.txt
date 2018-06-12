@@ -27,3 +27,6 @@ TARGET_LINK_LIBRARIES(vector-sample sgbot boost_system boost_thread)
 
 ADD_EXECUTABLE(logit-sample logit-sample.cpp)
 TARGET_LINK_LIBRARIES(logit-sample sgbot boost_system boost_thread)
+
+ADD_EXECUTABLE(sgbot_test test.cpp)
+TARGET_LINK_LIBRARIES(sgbot_test sgbot boost_system boost_thread)
