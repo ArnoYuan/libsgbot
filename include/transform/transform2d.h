@@ -163,11 +163,11 @@ namespace tf {
       float theta = sgbot::math::asin(rotate_(1,0);
       if(rotate_(0,0)<0&&rotate_(1,0)<0)
       {
-	theta -= M_PI/2;
+	theta = -sgbot::math::acos(rotate_(0,0));
       }
       else if(rotate_(0,0)<0&&rotate_(1,0)>0)
       {
-	theta += M_PI/2;
+	theta = sgbot::math::acos(rotate_(0, 0));
       }
       return theta;
      // //return sgbot::math::asin(rotate_(0, 1));
