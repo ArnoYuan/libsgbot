@@ -7,29 +7,29 @@ namespace sgbot{
     class SpathMsg
     {
     public:
-        SpathMsg(float theta, int dir)
+        SpathMsg()
 	{
-            theta_ = theta;
-	    dir_ = dir;
+            this->theta = 0;
+	    this->dir = 0;
 	}
-	virtual SpathMsg(){}
+	virtual ~SpathMsg(){}
 
 	void setValue(float theta, int dir)
 	{
-            theta_ = theta;
-            dir_ = dir;
+            this->theta = theta;
+            this->dir = dir;
 	}
 
-	void getValue(float &theta, int &dir)
+	void getValue(float &theta, int &dir) const
         {
-            theta = theta_;
-            dir = dir_;
+            theta = this->theta;
+            dir = this->dir;
         }
 
-    private:
-	float theta_;
-	int dir_;
-    }
+    public:
+	float theta;
+	int dir;
+    };
 }
 
 
